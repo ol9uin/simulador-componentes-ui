@@ -7,7 +7,7 @@
 ---
 
 ## Live Demo / Demostración en Vivo
-**[Deploy pending / Despliegue pendiente]** *(Replace this link with your GitHub Pages URL / Reemplaza este enlace con tu URL de GitHub Pages)*
+**[URL]** https://ol9uin.github.io/simulador-componentes-ui/
 
 ---
 
