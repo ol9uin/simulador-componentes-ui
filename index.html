@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="es" data-mode="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Toolkit v0.3.0</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#e8e8ed;
+  --surface:rgba(255,255,255,0.75);
+  --surface-solid:#ffffff;
+  --glass-border:rgba(255,255,255,0.8);
+  --glass-shadow:0 8px 32px rgba(0,0,0,0.08),0 1.5px 0 rgba(255,255,255,0.9) inset;
+  --blur:blur(20px) saturate(1.8);
+  --text:#1d1d1f;
+  --text2:#6e6e73;
+  --text3:#aeaeb2;
+  --accent:#0071e3;
+  --accent-bg:rgba(0,113,227,0.1);
+  --input-bg:rgba(0,0,0,0.04);
+  --input-border:rgba(0,0,0,0.1);
+  --divider:rgba(0,0,0,0.07);
+  --chip-bg:rgba(0,0,0,0.05);
+  --selected:rgba(0,113,227,0.12);
+  --selected-border:#0071e3;
+  --r:13px;--r-sm:8px;--r-xs:6px;
+}
+[data-mode="dark"]{
+  --bg:#111113;
+  --surface:rgba(44,44,46,0.8);
+  --surface-solid:#2c2c2e;
+  --glass-border:rgba(255,255,255,0.1);
+  --glass-shadow:0 8px 32px rgba(0,0,0,0.4),0 1.5px 0 rgba(255,255,255,0.06) inset;
+  --text:#f5f5f7;--text2:#98989d;--text3:#636366;
+  --accent:#0a84ff;--accent-bg:rgba(10,132,255,0.15);
+  --input-bg:rgba(255,255,255,0.06);--input-border:rgba(255,255,255,0.1);
+  --divider:rgba(255,255,255,0.07);--chip-bg:rgba(255,255,255,0.07);
+  --selected:rgba(10,132,255,0.15);--selected-border:#0a84ff;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background .3s,color .3s;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(0,113,227,0.07) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 85% 85%,rgba(52,199,89,0.05) 0%,transparent 60%)}
+[data-mode="dark"] body::before{background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(10,132,255,0.09) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 85% 85%,rgba(52,199,89,0.05) 0%,transparent 60%)}
+
+/* ── LAYOUT ── */
+.app{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-bottom:0.5px solid var(--glass-border);box-shadow:var(--glass-shadow);flex-shrink:0;z-index:100}
+.topbar-brand{font-family: monospace;font-size:0.75rem;font-weight:700;letter-spacing:-.02em;flex-shrink:0}
+.topbar-presets{display:flex;gap:4px;flex:1;overflow-x:auto;scrollbar-width:none}
+.topbar-presets::-webkit-scrollbar{display:none}
+.topbar-end{display:flex;gap:4px;flex-shrink:0;align-items:center}
+
+.workspace{display:flex;flex:1;overflow:hidden}
+.sidebar{width:300px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-right:0.5px solid var(--glass-border);overflow:hidden;transition:order .2s}
+[data-panel-side="right"] .sidebar{border-right:none;border-left:0.5px solid var(--glass-border);order:2}
+[data-panel-side="right"] .canvas-area{order:1}
+.canvas-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ELEMENTS ── */
+.preset-btn{padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500;border:0.5px solid var(--input-border);background:var(--chip-bg);color:var(--text2);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;flex-shrink:0}
+.preset-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+.icon-btn{width:30px;height:30px;border-radius:var(--r-sm);border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:background .15s,color .15s;flex-shrink:0}
+.icon-btn:hover{background:var(--input-bg);color:var(--text)}
+.icon-btn svg{width:15px;height:15px}
+.text-btn{padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500;border:0.5px solid var(--accent);color:var(--accent);background:transparent;cursor:pointer;white-space:nowrap;transition:background .15s;flex-shrink:0}
+.text-btn:hover{background:var(--accent-bg)}
+
+/* ── CANVAS ── */
+.canvas-scroll{flex:1;overflow:auto;padding:24px}
+.canvas-bg{min-height:100%;display:flex;flex-direction:column;align-items:center;gap:16px;background:repeating-conic-gradient(var(--divider) 0% 25%,transparent 0% 50%) 0 0/20px 20px;border-radius:var(--r);padding:32px 24px}
+
+/* CARDS IN CANVAS */
+.canvas-card-wrap{position:relative;cursor:default;transition:transform .15s}
+.canvas-card-wrap.dragging{opacity:.5;transform:scale(.97)}
+.canvas-card-wrap.drag-over{transform:scale(1.01)}
+.card-drag-handle{position:absolute;top:-22px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;background:var(--accent);color:#fff;font-size:10px;font-weight:600;cursor:grab;white-space:nowrap;z-index:10;user-select:none}
+.canvas-card-wrap:hover .card-drag-handle{display:flex}
+.card-select-label{position:absolute;top:-22px;right:0;font-size:10px;font-weight:600;color:var(--accent);opacity:0;pointer-events:none;transition:opacity .15s}
+.canvas-card-wrap.selected .card-select-label{opacity:1}
+
+/* THE CARD ITSELF */
+.live-card{background:#fff;border-radius:16px;padding:24px;border:1px solid rgba(0,0,0,0.08);box-shadow:0 4px 24px rgba(0,0,0,0.1);min-width:260px;max-width:400px;width:300px;transition:box-shadow .2s,border .2s,background .2s,border-radius .2s,padding .2s}
+.canvas-card-wrap.selected .live-card{outline:2px solid var(--selected-border);outline-offset:3px}
+
+/* BLOCKS */
+.block-wrap{position:relative;border-radius:var(--r-xs);transition:background .15s;cursor:pointer;padding:2px}
+.block-wrap:hover{background:rgba(0,113,227,0.06)}
+.block-wrap.selected-block{background:var(--selected);outline:1.5px dashed var(--selected-border);outline-offset:1px}
+.block-actions{position:absolute;top:-1px;right:-1px;display:none;gap:2px;background:var(--accent);border-radius:var(--r-xs);padding:2px 4px;z-index:5}
+.block-wrap:hover .block-actions,.block-wrap.selected-block .block-actions{display:flex}
+.ba-btn{width:18px;height:18px;border:none;background:transparent;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:3px;font-size:10px;font-weight:700;padding:0}
+.ba-btn:hover{background:rgba(255,255,255,0.2)}
+
+/* BLOCK TYPES */
+.b-eyebrow{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6e6e73;margin-bottom:4px}
+.b-title{font-size:20px;font-weight:700;color:#1d1d1f;margin-bottom:4px;line-height:1.2}
+.b-paragraph{font-size:13px;color:#6e6e73;line-height:1.5;margin-bottom:4px}
+.b-button{display:inline-flex;align-items:center;padding:9px 18px;border-radius:100px;font-size:13px;font-weight:600;background:#0071e3;color:#fff;border:none;cursor:pointer;margin-bottom:4px}
+.b-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:rgba(0,113,227,0.12);color:#0071e3;margin-bottom:4px}
+.b-divider{height:1px;background:rgba(0,0,0,0.08);margin:8px 0}
+.b-image{width:100%;height:80px;background:linear-gradient(135deg,rgba(0,113,227,0.1),rgba(52,199,89,0.1));border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;margin-bottom:4px;border:0.5px dashed var(--input-border)}
+
+/* ── SIDEBAR ── */
+.sidebar-tabs{display:flex;border-bottom:0.5px solid var(--divider);flex-shrink:0}
+.stab{flex:1;padding:10px 4px;font-size:12px;font-weight:500;color:var(--text2);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.stab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.sidebar-body{flex:1;overflow-y:auto;padding:14px}
+.sidebar-body::-webkit-scrollbar{width:4px}
+.sidebar-body::-webkit-scrollbar-thumb{background:var(--divider);border-radius:2px}
+
+/* ADD BLOCKS BAR */
+.add-bar{padding:10px 14px;border-top:0.5px solid var(--divider);flex-shrink:0;background:var(--surface)}
+.add-bar-label{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:6px}
+.add-btns{display:flex;flex-wrap:wrap;gap:4px}
+.add-btn{padding:4px 10px;border-radius:100px;font-size:11px;font-weight:500;border:0.5px solid var(--input-border);background:var(--chip-bg);color:var(--text2);cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+.add-btn:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+
+/* CSS STRIP */
+.css-strip{padding:8px 14px;border-top:0.5px solid var(--divider);background:var(--input-bg);display:flex;flex-wrap:wrap;gap:5px;align-items:center;flex-shrink:0;min-height:40px}
+.css-tag{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:100px;font-size:10px;font-family:'SF Mono','Menlo',monospace;background:var(--surface-solid);border:0.5px solid var(--divider);color:var(--accent);cursor:pointer;transition:background .15s;white-space:nowrap}
+.css-tag:hover{background:var(--accent-bg)}
+.css-tag .prop{color:var(--text2);margin-right:2px}
+.css-strip-label{font-size:10px;color:var(--text3);font-weight:500;white-space:nowrap}
+
+/* ── PANEL SECTIONS ── */
+.panel-section{margin-bottom:16px}
+.ps-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+label{font-size:11px;font-weight:500;color:var(--text2);display:block}
+input[type="text"],input[type="number"],select,textarea{width:100%;background:var(--input-bg);border:0.5px solid var(--input-border);border-radius:var(--r-sm);padding:6px 9px;font-size:12px;color:var(--text);font-family:inherit;outline:none;transition:border-color .18s}
+input[type="text"]:focus,input[type="number"]:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input[type="color"]{width:32px;height:30px;border:0.5px solid var(--input-border);border-radius:var(--r-sm);padding:2px;background:var(--input-bg);cursor:pointer;flex-shrink:0}
+input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer;height:4px}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;padding-right:22px}
+textarea{resize:none;font-size:12px}
+.row{display:flex;gap:8px}
+.col{flex:1;min-width:0}
+.range-row{display:flex;gap:6px;align-items:center}
+.range-row input[type="range"]{flex:1}
+.range-val{font-size:11px;font-weight:500;min-width:36px;text-align:right;color:var(--text);white-space:nowrap}
+.color-row{display:flex;gap:5px;align-items:center}
+.color-row input[type="text"]{flex:1}
+
+.chip-group{display:flex;flex-wrap:wrap;gap:4px}
+.mini-chip{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:500;background:var(--chip-bg);color:var(--text2);cursor:pointer;border:0.5px solid var(--input-border);transition:background .15s,color .15s;user-select:none}
+.mini-chip.on{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+
+.align-group{display:flex;gap:3px}
+.align-btn{flex:1;height:28px;border:0.5px solid var(--input-border);border-radius:var(--r-xs);background:var(--chip-bg);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:background .15s,color .15s}
+.align-btn.on{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+
+.shade-bar{display:flex;gap:2px;border-radius:var(--r-xs);overflow:hidden;margin-top:4px}
+.shade-item{flex:1;height:24px;cursor:pointer;transition:transform .1s}
+.shade-item:hover{transform:scaleY(1.2);z-index:1}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.toggle-row span{font-size:12px;color:var(--text)}
+.toggle{width:36px;height:22px;background:var(--text3);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.toggle.on::after{transform:translateX(14px)}
+
+.no-block-msg{text-align:center;padding:24px 12px;color:var(--text3);font-size:12px;line-height:1.6}
+
+/* CARDS LIST */
+.cards-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.card-list-item{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:var(--r-sm);border:0.5px solid var(--input-border);background:var(--chip-bg);cursor:pointer;transition:background .15s}
+.card-list-item:hover{background:var(--input-bg)}
+.card-list-item.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.card-list-item span{flex:1;font-size:12px;font-weight:500}
+.cli-btn{width:20px;height:20px;border:none;background:transparent;cursor:pointer;color:var(--text3);display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:11px}
+.cli-btn:hover{background:var(--divider);color:var(--text)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:6px 16px;border-radius:100px;font-size:12px;font-weight:500;z-index:9999;transition:transform .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* EXPORT MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface-solid);border-radius:var(--r);padding:20px;width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal-header{display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:600}
+.modal-tabs{display:flex;gap:4px}
+.modal-tab{padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500;border:0.5px solid var(--input-border);background:var(--chip-bg);color:var(--text2);cursor:pointer;transition:background .15s}
+.modal-tab.active{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+.modal-code{background:var(--input-bg);border:0.5px solid var(--input-border);border-radius:var(--r-sm);padding:12px;font-family:'SF Mono','Menlo',monospace;font-size:11px;color:var(--text2);white-space:pre;overflow:auto;flex:1;line-height:1.7;cursor:text;min-height:200px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px}
+
+@media(max-width:640px){
+  .workspace{flex-direction:column}
+  .sidebar{width:100%;height:50vh;border-right:none;border-bottom:0.5px solid var(--glass-border)}
+  [data-panel-side="right"] .sidebar{border-left:none;border-top:0.5px solid var(--glass-border);order:2}
+  [data-panel-side="right"] .canvas-area{order:1}
+  .canvas-bg{padding:16px}
+  .live-card{width:100%;max-width:340px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="topbar-brand">Design Toolkit [v0.3.0]</span>
+  <div class="topbar-presets">
+    <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
+    <button class="preset-btn" onclick="applyPreset('glass')">Glass</button>
+    <button class="preset-btn" onclick="applyPreset('dark')">Dark Card</button>
+    <button class="preset-btn" onclick="applyPreset('colorful')">Colorful</button>
+    <button class="preset-btn" onclick="applyPreset('brutal')">Brutalist</button>
+  </div>
+  <div class="topbar-end">
+    <button class="text-btn" onclick="openExport()">Exportar</button>
+    <button class="icon-btn" onclick="toggleSide()" title="Cambiar lado del panel">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="5" height="12" rx="1.5"/><rect x="8" y="2" width="7" height="12" rx="1.5"/></svg>
+    </button>
+    <button class="icon-btn" onclick="resetAll()" title="Resetear">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 0 1.5-4"/><path d="M2 2v4h4"/></svg>
+    </button>
+    <button class="icon-btn" onclick="toggleMode()">
+      <svg id="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.54 11.54l1.41 1.41M3.05 12.95l1.42-1.42M11.54 4.46l1.41-1.41"/></svg>
+      <svg id="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 9.5A5.5 5.5 0 116.5 2.5a4 4 0 007 7z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="workspace" id="workspace">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="stab active" onclick="switchSTab(this,'card')">Card</button>
+      <button class="stab" onclick="switchSTab(this,'block')">Bloque</button>
+      <button class="stab" onclick="switchSTab(this,'cards')">Cards</button>
+    </div>
+    <div class="sidebar-body" id="sb-card"><!-- card props --></div>
+    <div class="sidebar-body" id="sb-block" style="display:none"><!-- block props --></div>
+    <div class="sidebar-body" id="sb-cards" style="display:none"><!-- cards list --></div>
+    <div class="add-bar">
+      <div class="add-bar-label">Agregar bloque</div>
+      <div class="add-btns">
+        <button class="add-btn" onclick="addBlock('eyebrow')">Eyebrow</button>
+        <button class="add-btn" onclick="addBlock('title')">Título</button>
+        <button class="add-btn" onclick="addBlock('paragraph')">Párrafo</button>
+        <button class="add-btn" onclick="addBlock('button')">Botón</button>
+        <button class="add-btn" onclick="addBlock('badge')">Badge</button>
+        <button class="add-btn" onclick="addBlock('divider')">Divisor</button>
+        <button class="add-btn" onclick="addBlock('image')">Imagen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-area">
+    <div class="canvas-scroll" onclick="handleCanvasClick(event)">
+      <div class="canvas-bg" id="canvas-bg"></div>
+    </div>
+    <div class="css-strip" id="css-strip">
+      <span class="css-strip-label">CSS →</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeExport()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Exportar</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="modal-tabs">
+          <button class="modal-tab active" onclick="switchExportTab(this,'css')">CSS</button>
+          <button class="modal-tab" onclick="switchExportTab(this,'html')">HTML</button>
+        </div>
+        <button class="icon-btn" onclick="closeExport()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      </div>
+    </div>
+    <div class="modal-code" id="modal-code"></div>
+    <div class="modal-footer">
+      <button class="text-btn" onclick="copyExport()">Copiar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────
+let uid = 0;
+const newId = () => ++uid;
+
+function defaultCard() {
+  return {
+    id: newId(),
+    name: 'Card',
+    bgType: 'solid',
+    bgColor: '#ffffff',
+    bgGrad1: '#0071e3',
+    bgGrad2: '#34c759',
+    bgGradAngle: 135,
+    bgGradType: 'linear',
+    bgOpacity: 100,
+    borderColor: 'rgba(0,0,0,0.08)',
+    borderWidth: 1,
+    borderRadius: 16,
+    shX: 0, shY: 4, shBlur: 24, shSpread: 0,
+    shColor: '#000000', shAlpha: 10, shInset: false,
+    paddingV: 24, paddingH: 24,
+    width: 300,
+    blocks: [
+      defaultBlock('eyebrow','Componente'),
+      defaultBlock('title','Diseño en vivo'),
+      defaultBlock('paragraph','Ajusta las herramientas de la izquierda para ver los cambios en tiempo real.'),
+      defaultBlock('button','Acción'),
+    ]
+  };
+}
+
+function defaultBlock(type, text) {
+  const base = {id:newId(), type, align:'left'};
+  if(type==='eyebrow')   return {...base, text: text||'Eyebrow', color:'#6e6e73', size:11, weight:'600', ls:0.06};
+  if(type==='title')     return {...base, text: text||'Título', color:'#1d1d1f', size:20, weight:'700', ls:0, lh:1.2};
+  if(type==='paragraph') return {...base, text: text||'Texto del párrafo.', color:'#6e6e73', size:13, weight:'400', ls:0, lh:1.5};
+  if(type==='button')    return {...base, text: text||'Botón', color:'#ffffff', bgColor:'#0071e3', size:13, weight:'600', radius:100, paddingV:9, paddingH:18};
+  if(type==='badge')     return {...base, text: text||'Badge', color:'#0071e3', bgColor:'rgba(0,113,227,0.12)', size:11, weight:'600', radius:100};
+  if(type==='divider')   return {...base, color:'rgba(0,0,0,0.08)', height:1};
+  if(type==='image')     return {...base, text:'Imagen placeholder', height:80, radius:8, bgColor:'rgba(0,113,227,0.08)'};
+  return base;
+}
+
+let cards = [defaultCard()];
+let activeCardId = cards[0].id;
+let activeBlockId = null;
+let panelSide = 'left';
+let exportTab = 'css';
+
+function getCard(id){ return cards.find(c=>c.id===(id||activeCardId)) }
+function getBlock(bid){ const c=getCard(); return c?c.blocks.find(b=>b.id===bid):null }
+function activeBlock(){ return getBlock(activeBlockId) }
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function el(id){ return document.getElementById(id) }
+function showToast(msg){ const t=el('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500) }
+function cp(text,label='Valor'){ navigator.clipboard.writeText(text).then(()=>showToast(label+' copiado')) }
+function hexToRgb(hex){ return [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)] }
+function hexToHsl(hex){
+  let r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;
+  if(mx===mn){h=s=0}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;}}
+  return[Math.round(h*360),Math.round(s*100),Math.round(l*100)];
+}
+function hslToHex(h,s,l){
+  s/=100;l/=100;const a=s*Math.min(l,1-l);
+  const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(Math.min(k-3,9-k,1),-1);return Math.round(255*c).toString(16).padStart(2,'0');};
+  return`#${f(0)}${f(8)}${f(4)}`;
+}
+function rgba(hex,alpha){const[r,g,b]=hexToRgb(hex);return`rgba(${r},${g},${b},${alpha})`}
+function isHex(v){ return /^#[0-9a-fA-F]{6}$/.test(v) }
+function cardBg(c){
+  if(c.bgType==='gradient'){
+    const stops=`${c.bgGrad1}, ${c.bgGrad2}`;
+    if(c.bgGradType==='linear') return `linear-gradient(${c.bgGradAngle}deg, ${stops})`;
+    if(c.bgGradType==='radial') return `radial-gradient(circle, ${stops})`;
+    return `conic-gradient(from 0deg, ${stops})`;
+  }
+  const[r,g,b]=hexToRgb(c.bgColor);
+  return `rgba(${r},${g},${b},${c.bgOpacity/100})`;
+}
+function blockAlign(b){
+  if(!b.align||b.align==='left') return 'flex-start';
+  if(b.align==='center') return 'center';
+  return 'flex-end';
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function renderAll(){
+  renderCanvas();
+  renderSidebarCard();
+  renderSidebarBlock();
+  renderSidebarCards();
+  renderCSSStrip();
+}
+
+function renderCanvas(){
+  const bg=el('canvas-bg');
+  bg.innerHTML='';
+  cards.forEach(card=>{
+    const wrap=document.createElement('div');
+    wrap.className='canvas-card-wrap'+(card.id===activeCardId?' selected':'');
+    wrap.dataset.cardId=card.id;
+
+    const handle=document.createElement('div');
+    handle.className='card-drag-handle';
+    handle.innerHTML='⠿ '+card.name;
+    handle.draggable=true;
+    handle.addEventListener('dragstart',e=>{e.dataTransfer.setData('cardId',card.id);wrap.classList.add('dragging')});
+    handle.addEventListener('dragend',()=>wrap.classList.remove('dragging'));
+    wrap.appendChild(handle);
+
+    const lbl=document.createElement('div');
+    lbl.className='card-select-label';
+    lbl.textContent='Seleccionada';
+    wrap.appendChild(lbl);
+
+    const liveCard=document.createElement('div');
+    liveCard.className='live-card';
+    liveCard.style.cssText=`
+      background:${cardBg(card)};
+      border:${card.borderWidth}px solid ${card.borderColor};
+      border-radius:${card.borderRadius}px;
+      box-shadow:${card.shInset?'inset ':''} ${card.shX}px ${card.shY}px ${card.shBlur}px ${card.shSpread}px ${rgba(card.shColor,card.shAlpha/100)};
+      padding:${card.paddingV}px ${card.paddingH}px;
+      width:${card.width}px;
+    `;
+
+    card.blocks.forEach(block=>{
+      const bwrap=document.createElement('div');
+      bwrap.className='block-wrap'+(block.id===activeBlockId?' selected-block':'');
+      bwrap.dataset.blockId=block.id;
+      bwrap.style.display='flex';
+      bwrap.style.flexDirection='column';
+      bwrap.style.alignItems=blockAlign(block);
+
+      // drag
+      bwrap.draggable=true;
+      bwrap.addEventListener('dragstart',e=>{e.dataTransfer.setData('blockId',block.id);e.dataTransfer.setData('parentCardId',card.id);bwrap.classList.add('dragging');e.stopPropagation()});
+      bwrap.addEventListener('dragend',()=>bwrap.classList.remove('dragging'));
+      bwrap.addEventListener('dragover',e=>{e.preventDefault();bwrap.classList.add('drag-over')});
+      bwrap.addEventListener('dragleave',()=>bwrap.classList.remove('drag-over'));
+      bwrap.addEventListener('drop',e=>{
+        e.preventDefault();e.stopPropagation();
+        bwrap.classList.remove('drag-over');
+        const draggedId=parseInt(e.dataTransfer.getData('blockId'));
+        const pCardId=parseInt(e.dataTransfer.getData('parentCardId'));
+        if(draggedId && pCardId===card.id){
+          const arr=card.blocks;
+          const fromIdx=arr.findIndex(b=>b.id===draggedId);
+          const toIdx=arr.findIndex(b=>b.id===block.id);
+          if(fromIdx!==-1&&toIdx!==-1&&fromIdx!==toIdx){
+            const [moved]=arr.splice(fromIdx,1);arr.splice(toIdx,0,moved);
+            renderAll();
+          }
+        }
+      });
+
+      // actions
+      const acts=document.createElement('div');
+      acts.className='block-actions';
+      const idx=card.blocks.indexOf(block);
+      acts.innerHTML=`
+        <button class="ba-btn" title="Subir" onclick="moveBlock(${card.id},${block.id},-1)" ${idx===0?'disabled':''}>↑</button>
+        <button class="ba-btn" title="Bajar" onclick="moveBlock(${card.id},${block.id},1)" ${idx===card.blocks.length-1?'disabled':''}>↓</button>
+        <button class="ba-btn" title="Duplicar" onclick="dupBlock(${card.id},${block.id})">⧉</button>
+        <button class="ba-btn" title="Eliminar" onclick="removeBlock(${card.id},${block.id})">✕</button>
+      `;
+      bwrap.appendChild(acts);
+
+      const bel=renderBlockElement(block);
+      bwrap.appendChild(bel);
+      liveCard.appendChild(bwrap);
+    });
+
+    wrap.appendChild(liveCard);
+
+    // card drop zone
+    wrap.addEventListener('dragover',e=>{e.preventDefault();wrap.classList.add('drag-over')});
+    wrap.addEventListener('dragleave',()=>wrap.classList.remove('drag-over'));
+    wrap.addEventListener('drop',e=>{
+      e.preventDefault();wrap.classList.remove('drag-over');
+      const draggedCardId=parseInt(e.dataTransfer.getData('cardId'));
+      if(draggedCardId&&draggedCardId!==card.id){
+        const fromIdx=cards.findIndex(c=>c.id===draggedCardId);
+        const toIdx=cards.findIndex(c=>c.id===card.id);
+        if(fromIdx!==-1&&toIdx!==-1){const[m]=cards.splice(fromIdx,1);cards.splice(toIdx,0,m);renderAll();}
+      }
+    });
+
+    wrap.addEventListener('click',e=>{
+      if(e.target.closest('.block-wrap')){
+        const bw=e.target.closest('.block-wrap');
+        activeCardId=card.id;activeBlockId=parseInt(bw.dataset.blockId);
+        switchSTabById('block');renderAll();
+        e.stopPropagation();return;
+      }
+      activeCardId=card.id;activeBlockId=null;
+      switchSTabById('card');renderAll();
+      e.stopPropagation();
+    });
+
+    bg.appendChild(wrap);
+  });
+
+  // Add card button
+  const addCardBtn=document.createElement('button');
+  addCardBtn.style.cssText='padding:10px 20px;border-radius:100px;border:1.5px dashed var(--text3);background:transparent;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:background .15s';
+  addCardBtn.textContent='+ Nueva card';
+  addCardBtn.onmouseenter=()=>addCardBtn.style.background='var(--input-bg)';
+  addCardBtn.onmouseleave=()=>addCardBtn.style.background='transparent';
+  addCardBtn.onclick=e=>{e.stopPropagation();addCard()};
+  bg.appendChild(addCardBtn);
+}
+
+function renderBlockElement(b){
+  const el=document.createElement('div');
+  if(b.type==='eyebrow'){
+    el.className='b-eyebrow';el.contentEditable='true';el.textContent=b.text;
+    el.style.cssText=`color:${b.color};font-size:${b.size}px;font-weight:${b.weight};letter-spacing:${b.ls}em`;
+    el.oninput=()=>{b.text=el.textContent;renderSidebarBlock()};
+  }else if(b.type==='title'){
+    el.className='b-title';el.contentEditable='true';el.textContent=b.text;
+    el.style.cssText=`color:${b.color};font-size:${b.size}px;font-weight:${b.weight};letter-spacing:${b.ls}em;line-height:${b.lh}`;
+    el.oninput=()=>{b.text=el.textContent;renderSidebarBlock()};
+  }else if(b.type==='paragraph'){
+    el.className='b-paragraph';el.contentEditable='true';el.textContent=b.text;
+    el.style.cssText=`color:${b.color};font-size:${b.size}px;font-weight:${b.weight};letter-spacing:${b.ls}em;line-height:${b.lh}`;
+    el.oninput=()=>{b.text=el.textContent;renderSidebarBlock()};
+  }else if(b.type==='button'){
+    el.className='b-button';el.contentEditable='true';el.textContent=b.text;
+    el.style.cssText=`background:${b.bgColor};color:${b.color};font-size:${b.size}px;font-weight:${b.weight};border-radius:${b.radius}px;padding:${b.paddingV}px ${b.paddingH}px`;
+    el.oninput=()=>{b.text=el.textContent;renderSidebarBlock()};
+  }else if(b.type==='badge'){
+    el.className='b-badge';el.contentEditable='true';el.textContent=b.text;
+    el.style.cssText=`background:${b.bgColor};color:${b.color};font-size:${b.size}px;font-weight:${b.weight};border-radius:${b.radius}px`;
+    el.oninput=()=>{b.text=el.textContent;renderSidebarBlock()};
+  }else if(b.type==='divider'){
+    el.className='b-divider';el.style.cssText=`background:${b.color};height:${b.height}px;width:100%`;
+  }else if(b.type==='image'){
+    el.className='b-image';el.textContent=b.text;
+    el.style.cssText=`height:${b.height}px;border-radius:${b.radius}px;background:${b.bgColor}`;
+  }
+  return el;
+}
+
+function handleCanvasClick(e){
+  if(e.target===el('canvas-bg')){activeBlockId=null;renderAll();}
+}
+
+// ── SIDEBAR CARD ──────────────────────────────────────────────────────────
+function renderSidebarCard(){
+  const c=getCard();if(!c) return;
+  const sb=el('sb-card');
+
+  const shades=(()=>{
+    if(c.bgType!=='solid') return '';
+    const[h,s]=hexToHsl(c.bgColor);
+    return [10,20,30,40,50,60,70,80,90].map(l=>{
+      const hx=hslToHex(h,s,l);
+      return `<div class="shade-item" style="background:${hx}" title="${hx}" onclick="c_setShade('${hx}')"></div>`;
+    }).join('');
+  })();
+
+  sb.innerHTML=`
+  <div class="panel-section">
+    <div class="ps-title">Nombre</div>
+    <input type="text" value="${c.name}" oninput="getCard().name=this.value;renderSidebarCards()">
+  </div>
+
+  <div class="panel-section">
+    <div class="ps-title">Background</div>
+    <div class="field"><div class="chip-group">
+      <span class="mini-chip ${c.bgType==='solid'?'on':''}" onclick="c_setBgType('solid')">Sólido</span>
+      <span class="mini-chip ${c.bgType==='gradient'?'on':''}" onclick="c_setBgType('gradient')">Gradient</span>
+    </div></div>
+    <div id="sc-solid" style="${c.bgType==='gradient'?'display:none':''}">
+      <div class="field"><label>Color</label>
+        <div class="color-row">
+          <input type="color" id="sc-bg-c" value="${c.bgColor}" oninput="getCard().bgColor=this.value;el('sc-bg-t').value=this.value;renderCanvas();renderCSSStrip();buildShadeBar()">
+          <input type="text" id="sc-bg-t" value="${c.bgColor}" oninput="if(isHex(this.value)){getCard().bgColor=this.value;el('sc-bg-c').value=this.value;renderCanvas();renderCSSStrip();buildShadeBar()}">
+        </div>
+      </div>
+      <div class="field"><label>Opacidad</label>
+        <div class="range-row">
+          <input type="range" min="0" max="100" value="${c.bgOpacity}" oninput="getCard().bgOpacity=+this.value;el('sc-op-v').textContent=this.value+'%';renderCanvas();renderCSSStrip()">
+          <span class="range-val" id="sc-op-v">${c.bgOpacity}%</span>
+        </div>
+      </div>
+      <div class="field"><label>Tonos</label><div class="shade-bar" id="sc-shades">${shades}</div></div>
+    </div>
+    <div id="sc-grad" style="${c.bgType==='solid'?'display:none':''}">
+      <div class="field"><div class="chip-group">
+        <span class="mini-chip ${c.bgGradType==='linear'?'on':''}" onclick="c_setGradType('linear')">Linear</span>
+        <span class="mini-chip ${c.bgGradType==='radial'?'on':''}" onclick="c_setGradType('radial')">Radial</span>
+        <span class="mini-chip ${c.bgGradType==='conic'?'on':''}" onclick="c_setGradType('conic')">Conic</span>
+      </div></div>
+      <div class="row">
+        <div class="col field"><label>Color 1</label>
+          <div class="color-row">
+            <input type="color" value="${c.bgGrad1}" oninput="getCard().bgGrad1=this.value;renderCanvas();renderCSSStrip()">
+            <input type="text" value="${c.bgGrad1}" oninput="if(isHex(this.value)){getCard().bgGrad1=this.value;renderCanvas();renderCSSStrip()}">
+          </div>
+        </div>
+        <div class="col field"><label>Color 2</label>
+          <div class="color-row">
+            <input type="color" value="${c.bgGrad2}" oninput="getCard().bgGrad2=this.value;renderCanvas();renderCSSStrip()">
+            <input type="text" value="${c.bgGrad2}" oninput="if(isHex(this.value)){getCard().bgGrad2=this.value;renderCanvas();renderCSSStrip()}">
+          </div>
+        </div>
+      </div>
+      <div class="field" id="sc-angle-f" style="${c.bgGradType!=='linear'?'display:none':''}"><label>Ángulo</label>
+        <div class="range-row">
+          <input type="range" min="0" max="360" value="${c.bgGradAngle}" oninput="getCard().bgGradAngle=+this.value;el('sc-ang-v').textContent=this.value+'°';renderCanvas();renderCSSStrip()">
+          <span class="range-val" id="sc-ang-v">${c.bgGradAngle}°</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-section">
+    <div class="ps-title">Border</div>
+    <div class="row">
+      <div class="col field"><label>Color</label>
+        <div class="color-row">
+          <input type="color" value="${rgbaToHex(c.borderColor)}" oninput="getCard().borderColor=this.value;renderCanvas();renderCSSStrip()">
+          <input type="text" value="${c.borderColor}" oninput="if(this.value.length>4){getCard().borderColor=this.value;renderCanvas()}">
+        </div>
+      </div>
+      <div class="col field"><label>Grosor</label>
+        <div class="range-row">
+          <input type="range" min="0" max="8" value="${c.borderWidth}" oninput="getCard().borderWidth=+this.value;el('sc-bw-v').textContent=this.value+'px';renderCanvas();renderCSSStrip()">
+          <span class="range-val" id="sc-bw-v">${c.borderWidth}px</span>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Border radius</label>
+      <div class="range-row">
+        <input type="range" min="0" max="40" value="${c.borderRadius}" oninput="getCard().borderRadius=+this.value;el('sc-br-v').textContent=this.value+'px';renderCanvas();renderCSSStrip()">
+        <span class="range-val" id="sc-br-v">${c.borderRadius}px</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-section">
+    <div class="ps-title">Shadow</div>
+    <div class="row">
+      <div class="col field"><label>Offset X</label>
+        <div class="range-row">
+          <input type="range" min="-50" max="50" value="${c.shX}" oninput="getCard().shX=+this.value;el('sc-sx-v').textContent=this.value+'px';renderCanvas();renderCSSStrip()">
+          <span class="range-val" id="sc-sx-v">${c.shX}px</span>
+        </div>
+      </div>
+      <div class="col field"><label>Offset Y</label>
+        <div class="range-row">
+          <input type="range" min="-50" max="50" value="${c.shY}" oninput="getCard().shY=+this.value;el('sc-sy-v').textContent=this.value+'px';renderCanvas();renderCSSStrip()">
+          <span class="range-val" id="sc-sy-v">${c.shY}px</span>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col field"><label>Blur</label>
+        <div class="range-row">
+          <input type="range" min="0" max="80" value="${c.shBlur}" oninput="getCard().shBlur=+this.value;el('sc-sb-v').textContent=this.value+'px';renderCanvas();renderCSSStrip()">
+          <span class="range-val" id="sc-sb-v">${c.shBlur}px</span>
+        </div>
+      </div>
+      <div class="col field"><label>Spread</label>
+        <div class="range-row">
+          <input type="range" min="-20" max="20" value="${c.shSpread}" oninput="getCard().shSpread=+this.value;el('sc-ss-v').textContent=this.value+'px';renderCanvas();renderCSSStrip()">
+          <span class="range-val" id="sc-ss-v">${c.shSpread}px</span>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col field"><label>Color</label>
+        <div class="color-row">
+          <input type="color" value="${c.shColor}" oninput="getCard().shColor=this.value;renderCanvas();renderCSSStrip()">
+        </div>
+      </div>
+      <div class="col field"><label>Opacidad</label>
+        <div class="range-row">
+          <input type="range" min="0" max="100" value="${c.shAlpha}" oninput="getCard().shAlpha=+this.value;el('sc-sa-v').textContent=this.value+'%';renderCanvas();renderCSSStrip()">
+          <span class="range-val" id="sc-sa-v">${c.shAlpha}%</span>
+        </div>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <span>Inset</span>
+      <button class="toggle ${c.shInset?'on':''}" onclick="getCard().shInset=!getCard().shInset;this.classList.toggle('on',getCard().shInset);renderCanvas();renderCSSStrip()"></button>
+    </div>
+  </div>
+
+  <div class="panel-section">
+    <div class="ps-title">Tamaño y padding</div>
+    <div class="field"><label>Ancho</label>
+      <div class="range-row">
+        <input type="range" min="200" max="600" value="${c.width}" oninput="getCard().width=+this.value;el('sc-w-v').textContent=this.value+'px';renderCanvas()">
+        <span class="range-val" id="sc-w-v">${c.width}px</span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col field"><label>Padding V</label>
+        <div class="range-row">
+          <input type="range" min="8" max="60" value="${c.paddingV}" oninput="getCard().paddingV=+this.value;el('sc-pv-v').textContent=this.value+'px';renderCanvas()">
+          <span class="range-val" id="sc-pv-v">${c.paddingV}px</span>
+        </div>
+      </div>
+      <div class="col field"><label>Padding H</label>
+        <div class="range-row">
+          <input type="range" min="8" max="60" value="${c.paddingH}" oninput="getCard().paddingH=+this.value;el('sc-ph-v').textContent=this.value+'px';renderCanvas()">
+          <span class="range-val" id="sc-ph-v">${c.paddingH}px</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function c_setBgType(t){getCard().bgType=t;renderSidebarCard();renderCanvas();renderCSSStrip()}
+function c_setGradType(t){
+  getCard().bgGradType=t;
+  const af=el('sc-angle-f');if(af)af.style.display=t!=='linear'?'none':'';
+  renderCanvas();renderCSSStrip();
+}
+function c_setShade(hex){getCard().bgColor=hex;renderSidebarCard();renderCanvas();renderCSSStrip()}
+function buildShadeBar(){
+  const sb=el('sc-shades');if(!sb)return;
+  const c=getCard();const[h,s]=hexToHsl(c.bgColor);
+  sb.innerHTML=[10,20,30,40,50,60,70,80,90].map(l=>{const hx=hslToHex(h,s,l);return`<div class="shade-item" style="background:${hx}" title="${hx}" onclick="c_setShade('${hx}')"></div>`;}).join('');
+}
+function rgbaToHex(v){return/^#[0-9a-fA-F]{6}$/.test(v)?v:'#000000'}
+
+// ── SIDEBAR BLOCK ─────────────────────────────────────────────────────────
+function renderSidebarBlock(){
+  const sb=el('sb-block');
+  const b=activeBlock();
+  if(!b){sb.innerHTML=`<div class="no-block-msg">Toca un bloque en el canvas para ver sus propiedades.</div>`;return}
+
+  const alignBtns=(cur)=>['left','center','right'].map(a=>`<button class="align-btn ${cur===a?'on':''}" onclick="activeBlock().align='${a}';renderCanvas()" title="${a}">${a==='left'?'⬅':a==='center'?'⬛':'➡'}</button>`).join('');
+
+  let html=`<div class="panel-section"><div class="ps-title">Tipo: ${b.type}</div>
+  <div class="field"><label>Alineación</label><div class="align-group">${alignBtns(b.align)}</div></div>`;
+
+  if(['eyebrow','title','paragraph','button','badge'].includes(b.type)){
+    html+=`
+    <div class="field"><label>Texto</label><input type="text" value="${b.text.replace(/"/g,'&quot;')}" oninput="activeBlock().text=this.value;renderCanvas()"></div>
+    <div class="row">
+      <div class="col field"><label>Color texto</label>
+        <div class="color-row">
+          <input type="color" value="${isHex(b.color)?b.color:'#000000'}" oninput="activeBlock().color=this.value;renderCanvas()">
+          <input type="text" value="${b.color}" oninput="activeBlock().color=this.value;renderCanvas()">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col field"><label>Tamaño</label>
+        <div class="range-row">
+          <input type="range" min="8" max="60" value="${b.size}" oninput="activeBlock().size=+this.value;el('blk-sz-v').textContent=this.value+'px';renderCanvas()">
+          <span class="range-val" id="blk-sz-v">${b.size}px</span>
+        </div>
+      </div>
+      <div class="col field"><label>Weight</label>
+        <select onchange="activeBlock().weight=this.value;renderCanvas()">
+          ${['300','400','500','600','700','800'].map(w=>`<option value="${w}" ${b.weight===w?'selected':''}>${w}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+    if(b.type!=='button'&&b.type!=='badge'){
+      html+=`
+      <div class="row">
+        <div class="col field"><label>Line height</label>
+          <div class="range-row">
+            <input type="range" min="1" max="2.5" step="0.05" value="${b.lh||1.5}" oninput="activeBlock().lh=parseFloat(this.value).toFixed(2);el('blk-lh-v').textContent=activeBlock().lh;renderCanvas()">
+            <span class="range-val" id="blk-lh-v">${b.lh||1.5}</span>
+          </div>
+        </div>
+        <div class="col field"><label>Letter spacing</label>
+          <div class="range-row">
+            <input type="range" min="-0.05" max="0.2" step="0.005" value="${b.ls||0}" oninput="activeBlock().ls=parseFloat(this.value).toFixed(3);el('blk-ls-v').textContent=activeBlock().ls+'em';renderCanvas()">
+            <span class="range-val" id="blk-ls-v">${b.ls||0}em</span>
+          </div>
+        </div>
+      </div>`;
+    }
+  }
+
+  if(b.type==='button'||b.type==='badge'){
+    html+=`
+    <div class="field"><label>Background</label>
+      <div class="color-row">
+        <input type="color" value="${isHex(b.bgColor)?b.bgColor:'#0071e3'}" oninput="activeBlock().bgColor=this.value;renderCanvas()">
+        <input type="text" value="${b.bgColor}" oninput="activeBlock().bgColor=this.value;renderCanvas()">
+      </div>
+    </div>
+    <div class="field"><label>Border radius</label>
+      <div class="range-row">
+        <input type="range" min="0" max="100" value="${b.radius}" oninput="activeBlock().radius=+this.value;el('blk-r-v').textContent=this.value+'px';renderCanvas()">
+        <span class="range-val" id="blk-r-v">${b.radius}px</span>
+      </div>
+    </div>`;
+    if(b.type==='button'){
+      html+=`
+      <div class="row">
+        <div class="col field"><label>Padding V</label>
+          <div class="range-row">
+            <input type="range" min="4" max="24" value="${b.paddingV}" oninput="activeBlock().paddingV=+this.value;el('blk-pv-v').textContent=this.value+'px';renderCanvas()">
+            <span class="range-val" id="blk-pv-v">${b.paddingV}px</span>
+          </div>
+        </div>
+        <div class="col field"><label>Padding H</label>
+          <div class="range-row">
+            <input type="range" min="8" max="40" value="${b.paddingH}" oninput="activeBlock().paddingH=+this.value;el('blk-ph-v').textContent=this.value+'px';renderCanvas()">
+            <span class="range-val" id="blk-ph-v">${b.paddingH}px</span>
+          </div>
+        </div>
+      </div>`;
+    }
+  }
+
+  if(b.type==='divider'){
+    html+=`
+    <div class="row">
+      <div class="col field"><label>Color</label>
+        <div class="color-row">
+          <input type="color" value="${rgbaToHex(b.color)}" oninput="activeBlock().color=this.value;renderCanvas()">
+          <input type="text" value="${b.color}" oninput="activeBlock().color=this.value;renderCanvas()">
+        </div>
+      </div>
+      <div class="col field"><label>Alto</label>
+        <div class="range-row">
+          <input type="range" min="1" max="8" value="${b.height}" oninput="activeBlock().height=+this.value;el('blk-dh-v').textContent=this.value+'px';renderCanvas()">
+          <span class="range-val" id="blk-dh-v">${b.height}px</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(b.type==='image'){
+    html+=`
+    <div class="row">
+      <div class="col field"><label>Alto</label>
+        <div class="range-row">
+          <input type="range" min="40" max="200" value="${b.height}" oninput="activeBlock().height=+this.value;el('blk-ih-v').textContent=this.value+'px';renderCanvas()">
+          <span class="range-val" id="blk-ih-v">${b.height}px</span>
+        </div>
+      </div>
+      <div class="col field"><label>Border radius</label>
+        <div class="range-row">
+          <input type="range" min="0" max="40" value="${b.radius}" oninput="activeBlock().radius=+this.value;el('blk-ir-v').textContent=this.value+'px';renderCanvas()">
+          <span class="range-val" id="blk-ir-v">${b.radius}px</span>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Background</label>
+      <div class="color-row">
+        <input type="color" value="${isHex(b.bgColor)?b.bgColor:'#eeeeee'}" oninput="activeBlock().bgColor=this.value;renderCanvas()">
+        <input type="text" value="${b.bgColor}" oninput="activeBlock().bgColor=this.value;renderCanvas()">
+      </div>
+    </div>
+    <div class="field"><label>Label</label><input type="text" value="${b.text}" oninput="activeBlock().text=this.value;renderCanvas()"></div>`;
+  }
+
+  html+=`</div>`;
+  sb.innerHTML=html;
+}
+
+// ── SIDEBAR CARDS ─────────────────────────────────────────────────────────
+function renderSidebarCards(){
+  const sb=el('sb-cards');
+  sb.innerHTML=`<div class="panel-section"><div class="ps-title">Cards en el canvas</div>
+  <div class="cards-list">
+    ${cards.map((c,i)=>`
+      <div class="card-list-item ${c.id===activeCardId?'active':''}" onclick="activeCardId=${c.id};activeBlockId=null;switchSTabById('card');renderAll()">
+        <span>${c.name||'Card '+(i+1)}</span>
+        <button class="cli-btn" title="Duplicar" onclick="event.stopPropagation();dupCard(${c.id})">⧉</button>
+        <button class="cli-btn" title="Eliminar" onclick="event.stopPropagation();removeCard(${c.id})" ${cards.length===1?'disabled':''}>✕</button>
+      </div>`).join('')}
+  </div>
+  <button class="add-btn" style="width:100%;justify-content:center;padding:8px" onclick="addCard()">+ Nueva card</button>
+  </div>`;
+}
+
+// ── CSS STRIP ─────────────────────────────────────────────────────────────
+function renderCSSStrip(){
+  const strip=el('css-strip');const c=getCard();
+  strip.innerHTML='';
+  const lbl=document.createElement('span');lbl.className='css-strip-label';lbl.textContent='CSS →';strip.appendChild(lbl);
+  const bg=cardBg(c);
+  const sh=`${c.shInset?'inset ':''} ${c.shX}px ${c.shY}px ${c.shBlur}px ${c.shSpread}px ${rgba(c.shColor,c.shAlpha/100)}`;
+  const tags=[
+    ['background', bg.length>24?bg.slice(0,22)+'…':bg, bg],
+    ['border-radius',`${c.borderRadius}px`,`border-radius: ${c.borderRadius}px;`],
+    ['box-shadow', sh.length>22?sh.slice(0,20)+'…':sh, `box-shadow: ${sh};`],
+    ['padding',`${c.paddingV}px ${c.paddingH}px`,`padding: ${c.paddingV}px ${c.paddingH}px;`],
+  ];
+  tags.forEach(([p,d,copy])=>{
+    const t=document.createElement('span');t.className='css-tag';
+    t.innerHTML=`<span class="prop">${p}:</span>${d}`;t.title='Tap para copiar';
+    t.onclick=()=>cp(copy,p);strip.appendChild(t);
+  });
+  const ca=document.createElement('button');ca.className='text-btn';ca.style.marginLeft='auto';ca.textContent='Copiar CSS';ca.onclick=copyFullCSS;
+  strip.appendChild(ca);
+}
+
+// ── BLOCK ACTIONS ─────────────────────────────────────────────────────────
+function addBlock(type){
+  const c=getCard();if(!c)return;
+  const b=defaultBlock(type);
+  c.blocks.push(b);activeBlockId=b.id;switchSTabById('block');renderAll();
+}
+function removeBlock(cardId,blockId){
+  const c=getCard(cardId);if(!c)return;
+  c.blocks=c.blocks.filter(b=>b.id!==blockId);
+  if(activeBlockId===blockId){activeBlockId=null;switchSTabById('card');}
+  renderAll();
+}
+function moveBlock(cardId,blockId,dir){
+  const c=getCard(cardId);if(!c)return;
+  const i=c.blocks.findIndex(b=>b.id===blockId);
+  const ni=i+dir;if(ni<0||ni>=c.blocks.length)return;
+  [c.blocks[i],c.blocks[ni]]=[c.blocks[ni],c.blocks[i]];renderAll();
+}
+function dupBlock(cardId,blockId){
+  const c=getCard(cardId);if(!c)return;
+  const i=c.blocks.findIndex(b=>b.id===blockId);
+  const clone=JSON.parse(JSON.stringify(c.blocks[i]));clone.id=newId();
+  c.blocks.splice(i+1,0,clone);activeBlockId=clone.id;switchSTabById('block');renderAll();
+}
+
+// ── CARD ACTIONS ──────────────────────────────────────────────────────────
+function addCard(){
+  const c=defaultCard();cards.push(c);activeCardId=c.id;activeBlockId=null;switchSTabById('card');renderAll();
+}
+function removeCard(id){
+  if(cards.length===1){showToast('Necesitas al menos una card');return}
+  cards=cards.filter(c=>c.id!==id);
+  if(activeCardId===id){activeCardId=cards[0].id;activeBlockId=null;}
+  renderAll();
+}
+function dupCard(id){
+  const src=getCard(id);const clone=JSON.parse(JSON.stringify(src));
+  clone.id=newId();clone.name=clone.name+' copia';
+  clone.blocks.forEach(b=>b.id=newId());
+  const i=cards.findIndex(c=>c.id===id);cards.splice(i+1,0,clone);
+  activeCardId=clone.id;activeBlockId=null;switchSTabById('card');renderAll();
+}
+
+// ── SIDEBAR TABS ──────────────────────────────────────────────────────────
+function switchSTab(btn,name){
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['card','block','cards'].forEach(n=>el('sb-'+n).style.display=n===name?'':'none');
+}
+function switchSTabById(name){
+  const btns=document.querySelectorAll('.stab');
+  const names=['card','block','cards'];
+  btns.forEach((b,i)=>{b.classList.toggle('active',names[i]===name)});
+  names.forEach(n=>el('sb-'+n).style.display=n===name?'':'none');
+  if(name==='block') renderSidebarBlock();
+  if(name==='card') renderSidebarCard();
+  if(name==='cards') renderSidebarCards();
+}
+
+// ── PRESETS ───────────────────────────────────────────────────────────────
+const PRESETS={
+  minimal:{bgColor:'#ffffff',bgType:'solid',bgOpacity:100,borderColor:'#e5e5e7',borderWidth:1,borderRadius:12,shX:0,shY:2,shBlur:8,shSpread:0,shColor:'#000000',shAlpha:6,shInset:false},
+  glass:{bgColor:'#ffffff',bgType:'solid',bgOpacity:60,borderColor:'rgba(255,255,255,0.8)',borderWidth:1,borderRadius:20,shX:0,shY:8,shBlur:32,shSpread:0,shColor:'#000000',shAlpha:10,shInset:false},
+  dark:{bgColor:'#1c1c1e',bgType:'solid',bgOpacity:100,borderColor:'rgba(255,255,255,0.1)',borderWidth:1,borderRadius:16,shX:0,shY:8,shBlur:40,shSpread:0,shColor:'#000000',shAlpha:40,shInset:false},
+  colorful:{bgType:'gradient',bgGrad1:'#0071e3',bgGrad2:'#34c759',bgGradType:'linear',bgGradAngle:135,borderColor:'transparent',borderWidth:0,borderRadius:20,shX:0,shY:12,shBlur:40,shSpread:-4,shColor:'#0071e3',shAlpha:30,shInset:false},
+  brutal:{bgColor:'#f5f500',bgType:'solid',bgOpacity:100,borderColor:'#000000',borderWidth:3,borderRadius:0,shX:5,shY:5,shBlur:0,shSpread:0,shColor:'#000000',shAlpha:100,shInset:false},
+};
+function applyPreset(name){
+  const p=PRESETS[name];if(!p)return;
+  Object.assign(getCard(),p);renderSidebarCard();renderCanvas();renderCSSStrip();showToast('Preset aplicado');
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────
+function genCSS(c){
+  const bg=cardBg(c);
+  const sh=`${c.shInset?'inset ':''} ${c.shX}px ${c.shY}px ${c.shBlur}px ${c.shSpread}px ${rgba(c.shColor,c.shAlpha/100)}`;
+  return `.card {
+  background: ${bg};
+  border: ${c.borderWidth}px solid ${c.borderColor};
+  border-radius: ${c.borderRadius}px;
+  box-shadow: ${sh};
+  padding: ${c.paddingV}px ${c.paddingH}px;
+  width: ${c.width}px;
+}`;
+}
+function genHTML(c){
+  const blockHTML=(b)=>{
+    const al=b.align==='center'?'center':b.align==='right'?'right':'left';
+    const wrap=`style="text-align:${al}"`;
+    if(b.type==='eyebrow') return `  <p class="eyebrow" ${wrap}>${b.text}</p>`;
+    if(b.type==='title') return `  <h2 class="title" ${wrap}>${b.text}</h2>`;
+    if(b.type==='paragraph') return `  <p class="body" ${wrap}>${b.text}</p>`;
+    if(b.type==='button') return `  <div ${wrap}><button class="btn">${b.text}</button></div>`;
+    if(b.type==='badge') return `  <div ${wrap}><span class="badge">${b.text}</span></div>`;
+    if(b.type==='divider') return `  <hr class="divider">`;
+    if(b.type==='image') return `  <div class="img-placeholder">${b.text}</div>`;
+    return '';
+  };
+  return `<div class="card">\n${c.blocks.map(blockHTML).join('\n')}\n</div>`;
+}
+function openExport(){
+  el('modal-backdrop').classList.add('open');
+  updateExportCode();
+}
+function closeExport(){el('modal-backdrop').classList.remove('open')}
+function switchExportTab(btn,tab){
+  exportTab=tab;
+  document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  updateExportCode();
+}
+function updateExportCode(){
+  const c=getCard();
+  el('modal-code').textContent=exportTab==='css'?genCSS(c):genHTML(c);
+}
+function copyExport(){const c=getCard();cp(exportTab==='css'?genCSS(c):genHTML(c),'Código')}
+function copyFullCSS(){const c=getCard();cp(genCSS(c),'CSS completo')}
+
+// ── GLOBAL ────────────────────────────────────────────────────────────────
+function toggleSide(){
+  panelSide=panelSide==='left'?'right':'left';
+  el('workspace').dataset.panelSide=panelSide===('right')?'right':'';
+  showToast('Panel '+(panelSide==='right'?'a la derecha':'a la izquierda'));
+}
+function toggleMode(){
+  const isDark=document.documentElement.dataset.mode==='dark';
+  document.documentElement.dataset.mode=isDark?'light':'dark';
+  el('icon-sun').style.display=isDark?'none':'block';
+  el('icon-moon').style.display=isDark?'block':'none';
+}
+function resetAll(){
+  uid=0;cards=[defaultCard()];activeCardId=cards[0].id;activeBlockId=null;
+  switchSTabById('card');renderAll();showToast('Reseteado');
+}
+
+// INIT
+renderAll();
+</script>
+</body>
+</html>
